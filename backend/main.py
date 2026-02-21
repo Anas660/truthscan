@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import text, image, video, audio
 
-app = FastAPI(title="TruthScan API")
+app = FastAPI(title="Ai TruthScan API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,4 +19,4 @@ app.include_router(audio.router, prefix="/detect")
 
 @app.get("/")
 def root():
-    return {"message": "TruthScan API is running", "docs": "/docs"}
+    return {"message": "Ai TruthScan API is running", "docs": "/docs"}

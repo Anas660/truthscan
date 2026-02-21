@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+httpx
+pydantic
+python-multipart
+numpy
+opencv-python
+librosa
+hive-moderation
+elevenlabs-sdk
+gptzero-sdk
