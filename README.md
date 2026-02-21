@@ -1,6 +1,6 @@
-# TruthScan
+# Ai TruthScan
 
-**AI Content Detection Engine** — Detect whether text, images, video, and audio were AI-generated or human-made, with confidence scores and signal breakdowns.
+**AI Content Detection Engine** — Ai TruthScan detects whether text, images, video, and audio were AI-generated or human-made, with confidence scores and signal breakdowns.
 
 ---
 
@@ -18,37 +18,38 @@
 
 ```
 truthscan/
-├── frontend/          # React 18 + Vite
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── routers/
+│   │   │   ├── text.py
+│   │   │   ├── image.py
+│   │   │   ├── video.py
+│   │   │   └── audio.py
+│   │   └── services/
+│   │       ├── gptzero.py
+│   │       ├── hive.py
+│   │       ├── elevenlabs.py
+│   │       └── video_analyzer.py
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── .env.example
+├── frontend/
 │   ├── src/
 │   │   ├── App.jsx
 │   │   ├── main.jsx
-│   │   ├── index.css
 │   │   └── components/
 │   │       ├── TabSelector.jsx
 │   │       ├── TextPanel.jsx
 │   │       ├── ImagePanel.jsx
 │   │       ├── VideoPanel.jsx
-│   │       ├── AudioPanel.jsx
-│   │       ├── UploadZone.jsx
-│   │       ├── ResultCard.jsx
-│   │       └── LoadingSpinner.jsx
+│   │       └── AudioPanel.jsx
+│   ├── Dockerfile
 │   ├── package.json
 │   └── vite.config.js
-├── backend/           # Python FastAPI
-│   ├── main.py
-│   ├── routers/
-│   │   ├── text.py
-│   │   ├── image.py
-│   │   ├── video.py
-│   │   └── audio.py
-│   ├── services/
-│   │   ├── gptzero.py
-│   │   ├── hive.py
-│   │   ├── elevenlabs.py
-│   │   └── video_analyzer.py
-│   ├── requirements.txt
-│   └── .env.example
-├── docker-compose.yml
+├── deploy/
+│   ├── docker-compose.prod.yml
+│   └── nginx.conf
 └── README.md
 ```
 
@@ -63,7 +64,7 @@ cd backend
 pip install -r requirements.txt
 cp .env.example .env
 # Edit .env and add your API keys
-uvicorn main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8000
 ```
 
 API docs available at: http://localhost:8000/docs
@@ -111,8 +112,8 @@ AIORNOT_API_KEY=your_key_here
 # Copy and fill in API keys first
 cp backend/.env.example backend/.env
 
-docker compose up --build
-# Frontend: http://localhost:5173
+docker compose -f deploy/docker-compose.prod.yml up --build
+# Frontend:  http://localhost:5173
 # Backend:  http://localhost:8000
 ```
 

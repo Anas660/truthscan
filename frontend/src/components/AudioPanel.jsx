@@ -1,75 +1,64 @@
-import { useState } from 'react'
-import axios from 'axios'
-import UploadZone from './UploadZone'
-import LoadingSpinner from './LoadingSpinner'
-import ResultCard from './ResultCard'
+import React, { useState } from 'react';
 
-const API = 'http://localhost:8000/detect/audio'
-const MAX_BYTES = 100 * 1024 * 1024
+const AudioPanel = () => {
+  const [audioFile, setAudioFile] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-export default function AudioPanel({ onError }) {
-  const [file, setFile]       = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [result, setResult]   = useState(null)
-  const [fileError, setFileError] = useState(null)
+  const handleFileChange = (event) => {
+    setAudioFile(event.target.files[0]);
+  };
 
-  const handleFile = (f, err) => {
-    setResult(null)
-    if (err) { setFileError(err); setFile(null); return }
-    setFileError(null)
-    setFile(f)
-  }
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!audioFile) return;
 
-  const handleScan = async () => {
-    if (!file) return
-    setLoading(true)
-    setResult(null)
+    setLoading(true);
+    const formData = new FormData();
+    formData.append('file', audioFile);
+
     try {
-      const form = new FormData()
-      form.append('file', file)
-      const res = await axios.post(API, form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 60000,
-      })
-      setResult(res.data)
-    } catch (err) {
-      const msg =
-        err.response?.data?.detail ||
-        err.response?.data?.message ||
-        err.message ||
-        'Request failed'
-      onError(msg)
+      const response = await fetch('http://backend:8000/detect/audio', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      setResult(data);
+    } catch (error) {
+      console.error('Error detecting audio:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="panel">
-      <UploadZone
-        accept="audio/mpeg,audio/wav,audio/aac,audio/flac,audio/x-flac,audio/mp3"
-        maxBytes={MAX_BYTES}
-        formats="MP3 · WAV · AAC · FLAC"
-        sizeLabel="100 MB"
-        accentColor="var(--text-cyan)"
-        onFile={handleFile}
-      />
-
-      {fileError && <p className="error-msg">{fileError}</p>}
-
-      {loading ? (
-        <LoadingSpinner color="cyan" message="Running waveform analysis..." />
-      ) : (
-        <button
-          className="scan-btn scan-btn-cyan"
-          onClick={handleScan}
-          disabled={!file || loading}
-        >
-          SCAN FOR AI
+    <div>
+      <h2>Audio Detection</h2>
+      <form onSubmit={handleSubmit}>
+        <input type="file" accept="audio/*" onChange={handleFileChange} />
+        <button type="submit" disabled={loading}>
+          {loading ? 'Detecting...' : 'Detect Audio'}
         </button>
+      </form>
+      {result && (
+        <div>
+          <h3>Detection Result</h3>
+          <p>Verdict: {result.verdict}</p>
+          <p>AI Probability: {result.ai_probability}</p>
+          <p>Human Probability: {result.human_probability}</p>
+          <p>Confidence: {result.confidence}%</p>
+          <h4>Signals:</h4>
+          <ul>
+            {result.signals.map((signal, index) => (
+              <li key={index}>
+                {signal.label} (Severity: {signal.severity})
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
-
-      {result && !loading && <ResultCard result={result} />}
     </div>
-  )
-}
+  );
+};
+
+export default AudioPanel;

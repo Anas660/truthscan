@@ -1,74 +1,73 @@
-import { useState } from 'react'
-import axios from 'axios'
-import UploadZone from './UploadZone'
-import LoadingSpinner from './LoadingSpinner'
-import ResultCard from './ResultCard'
+import React, { useState } from 'react';
 
-const API = 'http://localhost:8000/detect/image'
-const MAX_BYTES = 20 * 1024 * 1024
+const ImagePanel = () => {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-export default function ImagePanel({ onError }) {
-  const [file, setFile]       = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [result, setResult]   = useState(null)
-  const [fileError, setFileError] = useState(null)
+  const handleFileChange = (event) => {
+    setSelectedFile(event.target.files[0]);
+  };
 
-  const handleFile = (f, err) => {
-    setResult(null)
-    if (err) { setFileError(err); setFile(null); return }
-    setFileError(null)
-    setFile(f)
-  }
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!selectedFile) return;
 
-  const handleScan = async () => {
-    if (!file) return
-    setLoading(true)
-    setResult(null)
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
     try {
-      const form = new FormData()
-      form.append('file', file)
-      const res = await axios.post(API, form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      setResult(res.data)
+      const response = await fetch('http://backend:8000/detect/image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      setResult(data);
     } catch (err) {
-      const msg =
-        err.response?.data?.detail ||
-        err.response?.data?.message ||
-        err.message ||
-        'Request failed'
-      onError(msg)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="panel">
-      <UploadZone
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        maxBytes={MAX_BYTES}
-        formats="JPG · PNG · WEBP · GIF"
-        sizeLabel="20 MB"
-        accentColor="var(--text-orange)"
-        onFile={handleFile}
-      />
-
-      {fileError && <p className="error-msg">{fileError}</p>}
-
-      {loading ? (
-        <LoadingSpinner color="orange" message="Scanning for synthetic artifacts..." />
-      ) : (
-        <button
-          className="scan-btn scan-btn-orange"
-          onClick={handleScan}
-          disabled={!file || loading}
-        >
-          SCAN FOR AI
+    <div>
+      <h2>Image Detection</h2>
+      <form onSubmit={handleSubmit}>
+        <input type="file" accept="image/*" onChange={handleFileChange} />
+        <button type="submit" disabled={loading}>
+          {loading ? 'Uploading...' : 'Upload Image'}
         </button>
+      </form>
+      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+      {result && (
+        <div>
+          <h3>Detection Result</h3>
+          <p>Verdict: {result.verdict}</p>
+          <p>AI Probability: {result.ai_probability}</p>
+          <p>Human Probability: {result.human_probability}</p>
+          <p>Confidence: {result.confidence}%</p>
+          <h4>Signals:</h4>
+          <ul>
+            {result.signals.map((signal, index) => (
+              <li key={index}>
+                {signal.label} (Severity: {signal.severity})
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
-
-      {result && !loading && <ResultCard result={result} />}
     </div>
-  )
-}
+  );
+};
+
+export default ImagePanel;
