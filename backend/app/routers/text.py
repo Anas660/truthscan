@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from services.gptzero import detect_text
-from services.hive import detect_image
+from app.services.gptzero import detect_text
+from app.services.hive import detect_image
 
 router = APIRouter()
 
