@@ -2,27 +2,34 @@ version: "3.8"
 
 services:
   backend:
+    container_name: aitruthscan_backend
     build:
       context: ../backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8001:8000"
     env_file: ../backend/.env
     restart: always
+    networks:
+      - aitruthscan-network
 
   frontend:
+    container_name: aitruthscan_frontend
     build:
       context: ../frontend
       dockerfile: Dockerfile
-    ports:
-      - "5173:5173"
+      args:
+        - VITE_API_URL=https://aitruthscan.com/api
+    expose:
+      - "80"
     depends_on:
       - backend
-    environment:
-      - VITE_API_URL=http://backend:8000
     restart: always
+    networks:
+      - aitruthscan-network
 
   nginx:
+    container_name: aitruthscan_nginx
     image: nginx:latest
     ports:
       - "8090:80"
@@ -30,4 +37,11 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - frontend
+      - backend
     restart: always
+    networks:
+      - aitruthscan-network
+
+networks:
+  aitruthscan-network:
+    driver: bridge
