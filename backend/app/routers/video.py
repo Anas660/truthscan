@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from typing import Dict
-from services.video_analyzer import analyze_video
+from app.services.video_analyzer import analyze_video
 
 router = APIRouter()
 

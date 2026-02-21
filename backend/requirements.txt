@@ -6,6 +6,4 @@ python-multipart
 numpy
 opencv-python
 librosa
-hive-moderation
-elevenlabs-sdk
-gptzero-sdk
+elevenlabs

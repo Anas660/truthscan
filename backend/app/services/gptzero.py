@@ -1,13 +1,14 @@
 from fastapi import HTTPException
 import requests
 import os
+import asyncio
 
 class GPTZeroService:
     def __init__(self):
         self.api_key = os.getenv("GPTZERO_API_KEY")
         self.api_url = "https://api.gptzero.me/detect"
 
-    def detect_text(self, text: str):
+    async def detect_text(self, text: str):
         if not self.api_key:
             raise HTTPException(status_code=500, detail="GPTZero API key not configured.")
 
