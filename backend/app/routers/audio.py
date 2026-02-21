@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile
-from services.elevenlabs import detect_audio
+from app.services.elevenlabs import detect_audio
 
 router = APIRouter()
 

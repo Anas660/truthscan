@@ -1,5 +1,5 @@
 from fastapi import APIRouter, File, UploadFile
-from services.hive import detect_image
+from app.services.hive import detect_image
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
