@@ -24,3 +24,9 @@ class GPTZeroService:
             raise HTTPException(status_code=response.status_code, detail=response.json().get("error", "Unknown error"))
 
         return response.json()
+
+# Export wrapper function for router
+_service = GPTZeroService()
+
+async def detect_text(text: str):
+    return await _service.detect_text(text)

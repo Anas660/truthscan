@@ -2,6 +2,8 @@
 
 import requests
 import os
+from fastapi import UploadFile
+import tempfile
 
 class HiveModeration:
     def __init__(self):
@@ -24,3 +26,21 @@ class HiveModeration:
                 "details": result.get("details")
             }
         return {"error": "Failed to process the image."}
+
+# Export wrapper function for router
+_service = HiveModeration()
+
+async def detect_image(file: UploadFile):
+    # Save uploaded file temporarily
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
+        content = await file.read()
+        temp_file.write(content)
+        temp_path = temp_file.name
+    
+    try:
+        result = _service.check_image(temp_path)
+        return result
+    finally:
+        import os as os_module
+        if os_module.path.exists(temp_path):
+            os_module.remove(temp_path)
