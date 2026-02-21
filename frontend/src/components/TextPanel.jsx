@@ -1,70 +1,77 @@
-import { useState } from 'react'
-import axios from 'axios'
-import LoadingSpinner from './LoadingSpinner'
-import ResultCard from './ResultCard'
+import React, { useState } from 'react';
 
-const API = 'http://localhost:8000/detect/text'
+const TextPanel = () => {
+    const [textInput, setTextInput] = useState('');
+    const [result, setResult] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-export default function TextPanel({ onError }) {
-  const [text, setText]       = useState('')
-  const [loading, setLoading] = useState(false)
-  const [result, setResult]   = useState(null)
+    const handleInputChange = (e) => {
+        setTextInput(e.target.value);
+    };
 
-  const words = text.trim() ? text.trim().split(/\s+/).length : 0
-  const chars = text.length
-  const tooFew = words > 0 && words < 20
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
 
-  const handleScan = async () => {
-    if (!text.trim()) return
-    setLoading(true)
-    setResult(null)
-    try {
-      const res = await axios.post(API, { text })
-      setResult(res.data)
-    } catch (err) {
-      const msg =
-        err.response?.data?.detail ||
-        err.response?.data?.message ||
-        err.message ||
-        'Request failed'
-      onError(msg)
-    } finally {
-      setLoading(false)
-    }
-  }
+        try {
+            const response = await fetch('http://backend:8000/detect/text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: textInput }),
+            });
 
-  return (
-    <div className="panel">
-      <textarea
-        className="text-textarea"
-        placeholder="Paste the text you want to analyze... works best with 50+ words"
-        value={text}
-        onChange={e => { setText(e.target.value); setResult(null) }}
-        disabled={loading}
-      />
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
 
-      <div className="text-meta">
-        <span>{words} words</span>
-        <span>{chars} characters</span>
-      </div>
+            const data = await response.json();
+            setResult(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      {tooFew && (
-        <p className="text-warning">⚠ For best results, use 50+ words</p>
-      )}
+    return (
+        <div>
+            <h2>Text Detection</h2>
+            <form onSubmit={handleSubmit}>
+                <textarea
+                    value={textInput}
+                    onChange={handleInputChange}
+                    placeholder="Enter text to analyze"
+                    rows="4"
+                    cols="50"
+                />
+                <button type="submit" disabled={loading}>
+                    {loading ? 'Analyzing...' : 'Analyze Text'}
+                </button>
+            </form>
+            {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+            {result && (
+                <div>
+                    <h3>Result:</h3>
+                    <p>Verdict: {result.verdict}</p>
+                    <p>AI Probability: {result.ai_probability}</p>
+                    <p>Human Probability: {result.human_probability}</p>
+                    <p>Confidence: {result.confidence}%</p>
+                    <h4>Signals:</h4>
+                    <ul>
+                        {result.signals.map((signal, index) => (
+                            <li key={index}>
+                                {signal.label} (Severity: {signal.severity})
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+};
 
-      {loading ? (
-        <LoadingSpinner color="yellow" message="Analyzing linguistic patterns..." />
-      ) : (
-        <button
-          className="scan-btn scan-btn-yellow"
-          onClick={handleScan}
-          disabled={!text.trim() || loading}
-        >
-          SCAN FOR AI
-        </button>
-      )}
-
-      {result && !loading && <ResultCard result={result} />}
-    </div>
-  )
-}
+export default TextPanel;
